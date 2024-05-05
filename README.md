@@ -2,7 +2,7 @@
 
 some benchmarking
 
-# requirements 
+## requirements 
 
 [zig 0.12.0](https://ziglang.org/)
 
