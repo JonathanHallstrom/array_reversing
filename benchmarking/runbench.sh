@@ -5,7 +5,7 @@ run_benchmark() {
 	echo "Running benchmark for u${n}:"
 
 	#run benchmark
-	nice -n -20 ./bench_u${n}.out --benchmark_min_time=1s --benchmark_format=csv >"bench_u${n}.csv"
+	./bench_u${n}.out --benchmark_min_time=1s --benchmark_format=csv >"bench_u${n}.csv"
 }
 
 run_benchmark 8
