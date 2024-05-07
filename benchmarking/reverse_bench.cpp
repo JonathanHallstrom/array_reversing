@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 #include <vector>
 
 extern "C" {
@@ -49,38 +50,49 @@ void my_reverse(uint64_t *a, size_t n) { reverse_simd_u64(a, n); };
 #define DATA_TYPE uint8_t
 #endif
 
-const auto mult = 2ll;
-const auto low = 2ll;
-const auto high = 1ll << 30;
+const auto thread_count = 1;
+const auto mult = 2;
+const auto low = 1ll;
+const auto high = 1ll << 28;
 
 static void BM_std_reverse(benchmark::State &state) {
     std::vector<DATA_TYPE> arr(state.range(0));
     for (auto _: state) {
         std_reverse(arr.data(), arr.size());
         benchmark::DoNotOptimize(arr);
+        benchmark::DoNotOptimize(arr.data());
+        benchmark::ClobberMemory();
     }
+    state.SetItemsProcessed(state.iterations() * arr.size());
     state.SetBytesProcessed(state.iterations() * arr.size() * sizeof(arr[0]));
 }
-BENCHMARK(BM_std_reverse)->RangeMultiplier(mult)->Range(low, high);
 
 static void BM_my_reverse(benchmark::State &state) {
     std::vector<DATA_TYPE> arr(state.range(0));
     for (auto _: state) {
         my_reverse(arr.data(), arr.size());
         benchmark::DoNotOptimize(arr);
+        benchmark::DoNotOptimize(arr.data());
+        benchmark::ClobberMemory();
     }
+    state.SetItemsProcessed(state.iterations() * arr.size());
     state.SetBytesProcessed(state.iterations() * arr.size() * sizeof(arr[0]));
 }
-BENCHMARK(BM_my_reverse)->RangeMultiplier(mult)->Range(low, high);
 
 static void BM_memset(benchmark::State &state) {
     std::vector<DATA_TYPE> arr(state.range(0));
     for (auto _: state) {
         std::memset(arr.data(), 0, arr.size() * sizeof(arr[0]));
         benchmark::DoNotOptimize(arr);
+        benchmark::DoNotOptimize(arr.data());
+        benchmark::ClobberMemory();
     }
+    state.SetItemsProcessed(state.iterations() * arr.size());
     state.SetBytesProcessed(state.iterations() * arr.size() * sizeof(arr[0]));
 }
-BENCHMARK(BM_memset)->RangeMultiplier(mult)->Range(low, high);
+
+BENCHMARK(BM_my_reverse)->RangeMultiplier(mult)->Range(low, high)->Threads(thread_count);
+BENCHMARK(BM_std_reverse)->RangeMultiplier(mult)->Range(low, high)->Threads(thread_count);
+BENCHMARK(BM_memset)->RangeMultiplier(mult)->Range(low, high)->Threads(thread_count);
 
 BENCHMARK_MAIN();
