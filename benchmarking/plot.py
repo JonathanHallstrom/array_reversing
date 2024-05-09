@@ -1,4 +1,4 @@
-# from https://github.com/lakshayg/google_benchmark_plot?tab=readme-ov-file#readme at commit c66a1be3bb1dc9aedf3404f7a4810d0e2caf6ce5
+# modified from https://github.com/lakshayg/google_benchmark_plot?tab=readme-ov-file#readme at commit c66a1be3bb1dc9aedf3404f7a4810d0e2caf6ce5
 
 
 #!/usr/bin/env python
@@ -131,6 +131,10 @@ def plot_groups(label_groups, args):
         plt.xscale("log")
     if args.logy:
         plt.yscale("log")
+    ax = plt.gca()
+    ax.set_xlim((1, 10**9))
+    ax.set_ylim((10**8, 10**12))
+    
     plt.xlabel(args.xlabel)
     plt.ylabel(args.ylabel)
     plt.title(args.title)

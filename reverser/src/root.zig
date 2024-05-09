@@ -38,35 +38,22 @@ fn oneIteration(comptime T: type, a: []T, i: usize, comptime Len: comptime_int) 
     @memcpy(left_slice, right_shuffled[0..]);
 }
 
+fn assume(x: bool) void {
+    if (!x) unreachable;
+}
+
 pub fn reverseSimd(comptime T: type, a: []T) void {
-    if (@sizeOf(T) > 8) return std.mem.reverse(T, a);
+    if (@sizeOf(T) == 0) return;
     const n = a.len;
     var i: usize = 0;
-    const L1 = @max(8, 32 / @sizeOf(T));
-    // inline for (0..L1 / 2) |_| {
-    //     if (i == n / 2) return;
-    //     oneIteration(T, a, i, 1);
-    //     i += 1;
-    // }
+    const L1 = @max(1, 32 / @sizeOf(T));
     while (i + L1 - 1 < n / 2) : (i += L1) {
         oneIteration(T, a, i, L1);
     }
-    if (i + 7 < n / 2) {
-        oneIteration(T, a, i, 8);
-        i += 8;
-    }
-    if (i + 3 < n / 2) {
-        oneIteration(T, a, i, 4);
-        i += 4;
-    }
-    if (i + 1 < n / 2) {
-        oneIteration(T, a, i, 2);
-        i += 2;
-    }
-    inline for (0..@max(1, L1 - 14)) |_| {
-        if (i == n / 2) return;
-        oneIteration(T, a, i, 1);
-        i += 1;
+    const rem = n / 2 - i;
+    assume(rem < L1);
+    for (0..rem) |offs| {
+        oneIteration(T, a, i + offs, 1);
     }
 }
 
@@ -138,7 +125,7 @@ comptime {
     @setEvalBranchQuota(1 << 20);
     var prng = std.rand.Xoroshiro128.init(0);
     const rand = prng.random();
-    for ([_]type{ u8, u16, u32, u64, i8, i16, i32, i64 }) |T| {
+    for ([_]type{ u0, u1, u2, u3, u4, u5, u6, u7, u8, u16, u24, u32, u48, u64, u128, u256 }) |T| {
         for (0..16) |_| {
             var arr: [rand.uintLessThan(usize, 128)]T = undefined;
             for (&arr) |*e| {
