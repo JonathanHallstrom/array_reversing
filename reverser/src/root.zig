@@ -121,25 +121,28 @@ export fn reverse_simd_i64(a: [*]i64, n: usize) void {
     reverseSimd(i64, a[0..n]);
 }
 
-comptime {
+test {
     @setEvalBranchQuota(1 << 20);
     var prng = std.rand.Xoroshiro128.init(0);
     const rand = prng.random();
-    for ([_]type{ u0, u1, u2, u3, u4, u5, u6, u7, u8, u16, u24, u32, u48, u64, u128, u256 }) |T| {
+    inline for ([_]type{ u0, u1, u2, u3, u4, u5, u6, u7, u8, u16, u24, u32, u48, u64, u128, u256 }) |T| {
         for (0..16) |_| {
-            var arr: [rand.uintLessThan(usize, 128)]T = undefined;
-            for (&arr) |*e| {
+            const arr: []T = try std.testing.allocator.alloc(T, rand.uintLessThan(usize, 128));
+            defer std.testing.allocator.free(arr);
+            for (arr) |*e| {
                 e.* = rand.int(T);
             }
-            const original = arr;
-            std.mem.reverse(T, &arr);
-            const reversed = arr;
-            std.mem.reverse(T, &arr);
+            const original = try std.testing.allocator.dupe(T, arr);
+            defer std.testing.allocator.free(original);
+            std.mem.reverse(T, arr);
+            const reversed = try std.testing.allocator.dupe(T, arr);
+            defer std.testing.allocator.free(reversed);
+            std.mem.reverse(T, arr);
 
-            reverseSimd(T, &arr);
-            std.testing.expectEqualSlices(T, &reversed, &arr) catch {};
-            reverseSimd(T, &arr);
-            std.testing.expectEqualSlices(T, &original, &arr) catch {};
+            reverseSimd(T, arr);
+            try std.testing.expectEqualSlices(T, reversed, arr);
+            reverseSimd(T, arr);
+            try std.testing.expectEqualSlices(T, original, arr);
         }
     }
 }
