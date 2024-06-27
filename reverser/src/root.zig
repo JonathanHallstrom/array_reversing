@@ -1,36 +1,59 @@
 const std = @import("std");
 
+const swap = std.mem.swap;
+const doNotOptimizeAway = std.mem.doNotOptimizeAway;
+
+inline fn reverseVector(comptime N: usize, comptime T: type, a: []T) [N]T {
+    // comptime var reverse_mask: @Vector(N, i32) = undefined;
+    // inline for (0..N) |i| {
+    //     reverse_mask[i] = N - i - 1;
+    // }
+    // return switch (@typeInfo(T)) {
+    //     .Int,
+    //     .Float,
+    //     .Bool,
+    //     => @shuffle(T, a[0..N].*, undefined, reverse_mask),
+    //     else => {
+    //         var res: [N]T = undefined;
+    //         inline for (0..N) |i| {
+    //             res[i] = a[N - i - 1];
+    //         }
+    //         return res;
+    //     },
+    // };
+    var res: [N]T = undefined;
+    inline for (0..N) |i| {
+        res[i] = a[N - i - 1];
+    }
+    return res;
+}
+
 pub fn reverse(comptime T: type, items: []T) void {
     if (@sizeOf(T) == 0) return;
     var i: usize = 0;
     const end = items.len / 2;
 
     if (std.simd.suggestVectorLength(T)) |simd_size| {
-        comptime var reverse_mask: @Vector(simd_size, i32) = undefined;
-        inline for (0..simd_size) |j| {
-            reverse_mask[simd_size - j - 1] = j;
-        }
-
         if (simd_size <= end) {
             const simd_end = end - (simd_size - 1);
             while (i < simd_end) : (i += simd_size) {
                 const left_slice = items[i .. i + simd_size];
                 const right_slice = items[items.len - i - simd_size .. items.len - i];
 
-                var left_shuffled: [simd_size]T = @shuffle(T, left_slice[0..simd_size].*, undefined, reverse_mask);
-                var right_shuffled: [simd_size]T = @shuffle(T, right_slice[0..simd_size].*, undefined, reverse_mask);
+                const left_shuffled: [simd_size]T = reverseVector(simd_size, T, left_slice);
+                const right_shuffled: [simd_size]T = reverseVector(simd_size, T, right_slice);
 
                 @memcpy(right_slice, &left_shuffled);
                 @memcpy(left_slice, &right_shuffled);
             }
         }
         while (i < end) : (i += 1) {
-            std.mem.swap(T, &items[i], &items[items.len - i - 1]);
-            std.mem.doNotOptimizeAway(i); // prevent unrolling of this loop, since the number of iterations is small (less than `simd_size`)
+            swap(T, &items[i], &items[items.len - i - 1]);
+            doNotOptimizeAway(i);
         }
     } else {
         while (i < end) : (i += 1) {
-            std.mem.swap(T, &items[i], &items[items.len - i - 1]);
+            swap(T, &items[i], &items[items.len - i - 1]);
         }
     }
 }
@@ -97,6 +120,26 @@ export fn reverse_simd_u64(a: [*]u64, n: usize) void {
 
 export fn reverse_simd_i64(a: [*]i64, n: usize) void {
     reverse(i64, a[0..n]);
+}
+
+const testing = std.testing;
+
+test reverse {
+    {
+        var arr = [_]i32{ 5, 3, 1, 2, 4 };
+        reverse(i32, arr[0..]);
+        try testing.expectEqualSlices(i32, &arr, &[_]i32{ 4, 2, 1, 3, 5 });
+    }
+    {
+        var arr = [_]i64{ 19, 17, 15, 13, 11, 9, 7, 5, 3, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18 };
+        reverse(i64, arr[0..]);
+        try testing.expectEqualSlices(i64, &arr, &[_]i64{ 18, 16, 14, 12, 10, 8, 6, 4, 2, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19 });
+    }
+    {
+        var arr = [_][]const u8{ "a", "b", "c", "d" };
+        reverse([]const u8, arr[0..]);
+        try testing.expectEqualSlices([]const u8, &arr, &[_][]const u8{ "d", "c", "b", "a" });
+    }
 }
 
 test {
