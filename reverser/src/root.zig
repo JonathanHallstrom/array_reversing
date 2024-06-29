@@ -3,7 +3,7 @@ const std = @import("std");
 const swap = std.mem.swap;
 const doNotOptimizeAway = std.mem.doNotOptimizeAway;
 
-inline fn reverseVector(comptime N: usize, comptime T: type, a: []T) [N]T {
+fn reverseVector(comptime N: usize, comptime T: type, a: []T) [N]T {
     // comptime var reverse_mask: @Vector(N, i32) = undefined;
     // inline for (0..N) |i| {
     //     reverse_mask[i] = N - i - 1;
@@ -48,7 +48,7 @@ pub fn reverse(comptime T: type, items: []T) void {
             }
         }
     }
-    
+
     while (i < end) : (i += 1) {
         swap(T, &items[i], &items[items.len - i - 1]);
     }
