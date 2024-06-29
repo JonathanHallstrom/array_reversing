@@ -9,7 +9,7 @@ build_benchmark() {
 }
 
 echo "Building zig library"
-(cd ../reverser; zig build -Doptimize=ReleaseSmall)
+(cd ../reverser; zig build -Doptimize=ReleaseFast)
 build_benchmark 8
 build_benchmark 16
 build_benchmark 32

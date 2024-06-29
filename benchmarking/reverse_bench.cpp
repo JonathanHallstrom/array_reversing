@@ -51,7 +51,8 @@ void my_reverse(uint64_t *a, size_t n) { reverse_simd_u64(a, n); };
 #endif
 
 const auto thread_count = 1;
-const auto mult = 2;
+const auto num = 3;
+const auto den = 2;
 const auto low = 1ll;
 const auto high = 1ll << 28;
 
@@ -91,8 +92,15 @@ static void BM_memset(benchmark::State &state) {
     state.SetBytesProcessed(state.iterations() * arr.size() * sizeof(arr[0]));
 }
 
-BENCHMARK(BM_my_reverse)->RangeMultiplier(mult)->Range(low, high)->Threads(thread_count);
-BENCHMARK(BM_std_reverse)->RangeMultiplier(mult)->Range(low, high)->Threads(thread_count);
-BENCHMARK(BM_memset)->RangeMultiplier(mult)->Range(low, high)->Threads(thread_count);
+
+static void CustomArguments(benchmark::internal::Benchmark *b) {
+    for (int64_t value = low; value < high; value = (value * num + den - 1) / den) {
+        b->Arg(value);
+    }
+}
+
+BENCHMARK(BM_my_reverse)->Apply(CustomArguments)->Threads(thread_count);
+BENCHMARK(BM_std_reverse)->Apply(CustomArguments)->Threads(thread_count);
+BENCHMARK(BM_memset)->Apply(CustomArguments)->Threads(thread_count);
 
 BENCHMARK_MAIN();

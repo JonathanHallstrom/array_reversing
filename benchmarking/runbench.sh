@@ -5,7 +5,7 @@ run_benchmark() {
 	echo "Running benchmark for u${n}:"
 
 	#run benchmark
-	./bench_u${n}.out --benchmark_min_time=1s --benchmark_format=csv >"bench_u${n}.csv"
+	./bench_u${n}.out --benchmark_min_time=1s --benchmark_min_warmup_time=1 --benchmark_format=csv >"bench_u${n}.csv"
 }
 
 run_benchmark 8
