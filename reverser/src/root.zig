@@ -47,14 +47,10 @@ pub fn reverse(comptime T: type, items: []T) void {
                 @memcpy(left_slice, &right_shuffled);
             }
         }
-        while (i < end) : (i += 1) {
-            swap(T, &items[i], &items[items.len - i - 1]);
-            doNotOptimizeAway(i);
-        }
-    } else {
-        while (i < end) : (i += 1) {
-            swap(T, &items[i], &items[items.len - i - 1]);
-        }
+    }
+    
+    while (i < end) : (i += 1) {
+        swap(T, &items[i], &items[items.len - i - 1]);
     }
 }
 
