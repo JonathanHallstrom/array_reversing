@@ -16,3 +16,5 @@ git clone https://github.com/JonathanHallstrom/array_reversing.git
 cd benchmarking
 export CXX=clang++ && ./build.sh && ./runbench.sh && ./make_graphs.sh
 ```
+
+update: PR was merged https://github.com/ziglang/zig/pull/20455/
